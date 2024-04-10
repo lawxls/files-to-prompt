@@ -10,6 +10,8 @@ def should_ignore(path, gitignore_rules, ignore_patterns):
         if os.path.isdir(path) and fnmatch(os.path.basename(path) + "/", rule):
             return True
     for pattern in ignore_patterns:
+        if os.path.isdir(path) and os.path.basename(path) == pattern:
+            return True
         if fnmatch(path, pattern):
             return True
     return False
@@ -86,7 +88,7 @@ def process_path(
     "--ignore",
     multiple=True,
     default=[],
-    help="List of patterns to ignore, supports glob patterns",
+    help="List of directory names to ignore, no matter where they are",
 )
 @click.option(
     "--output",
