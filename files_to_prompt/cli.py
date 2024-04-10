@@ -3,11 +3,14 @@ import click
 from fnmatch import fnmatch
 
 
-def should_ignore(path, gitignore_rules):
+def should_ignore(path, gitignore_rules, ignore_patterns):
     for rule in gitignore_rules:
         if fnmatch(os.path.basename(path), rule):
             return True
         if os.path.isdir(path) and fnmatch(os.path.basename(path) + "/", rule):
+            return True
+    for pattern in ignore_patterns:
+        if fnmatch(path, pattern):
             return True
     return False
 
@@ -42,26 +45,16 @@ def process_path(
 
                 if not ignore_gitignore:
                     gitignore_rules.extend(read_gitignore(root))
-                    dirs[:] = [
-                        d
-                        for d in dirs
-                        if not should_ignore(os.path.join(root, d), gitignore_rules)
-                    ]
-                    files = [
-                        f
-                        for f in files
-                        if not should_ignore(os.path.join(root, f), gitignore_rules)
-                    ]
 
                 dirs[:] = [
                     d
                     for d in dirs
-                    if not any(fnmatch(d, pattern) for pattern in ignore_patterns)
+                    if not should_ignore(os.path.join(root, d), gitignore_rules, ignore_patterns)
                 ]
                 files = [
                     f
                     for f in files
-                    if not any(fnmatch(f, pattern) for pattern in ignore_patterns)
+                    if not should_ignore(os.path.join(root, f), gitignore_rules, ignore_patterns)
                 ]
 
                 for file in files:
@@ -93,7 +86,7 @@ def process_path(
     "--ignore",
     multiple=True,
     default=[],
-    help="List of patterns to ignore",
+    help="List of patterns to ignore, supports glob patterns",
 )
 @click.option(
     "--output",
